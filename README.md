@@ -33,6 +33,311 @@ Configure the config by following the commands in the console.
 
 Now add sound files to the sounds directory and start the bot with `$ python3 bot.py`
 
+# API Documentation
+
+## **Authentifizierung**
+
+All API-Endpoints are password protected and require a HTTP Basic Auth header.
+
+## API Endpoints
+
+<details>
+<summary><strong>1. Get Sounds</strong></summary>
+
+- **Endpoint:** `/api/sounds`
+- **Method:** `GET`
+- **Description:** Gets a list of all registered sounds.
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.get(
+    'http://127.0.0.1:5000/api/sounds',
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>2. Add Sound</strong></summary>
+
+- **Endpoint:** `/api/sounds/add`
+- **Method:** `POST`
+- **Description:** Registers a soundfile.
+
+**Body example:**
+
+```json
+{
+    "name": "example_sound",
+    "path": "sounds/example_sound.mp3"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "name": "example_sound",
+    "path": "sounds/example_sound.mp3"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/sounds/add',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>3. Remove Sound</strong></summary>
+
+- **Endpoint:** `/api/sounds/remove`
+- **Method:** `POST`
+- **Description:** Unregisters a soundfile.
+
+**Body example:**
+
+```json
+{
+    "name": "example_sound"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "name": "example_sound"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/sounds/remove',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>4. Rename Sound</strong></summary>
+
+- **Endpoint:** `/api/sounds/rename`
+- **Method:** `POST`
+- **Description:** Changes the name of an registrated sound.
+
+**Body example:**
+
+```json
+{
+    "oldName": "example_sound",
+    "newName": "new_example_sound"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "oldName": "example_sound",
+    "newName": "new_example_sound"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/sounds/rename',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>5. Play Sound</strong></summary>
+
+- **Endpoint:** `/api/sounds/play`
+- **Method:** `POST`
+- **Description:** Plays a sound.
+
+**Body example:**
+
+```json
+{
+    "name": "example_sound"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "name": "example_sound"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/sounds/play',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>6. Stop Sound</strong></summary>
+
+- **Endpoint:** `/api/sounds/stop`
+- **Method:** `POST`
+- **Description:** Stops the audio.
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/sounds/stop',
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>7. Join Channel</strong></summary>
+
+- **Endpoint:** `/api/channel/join`
+- **Method:** `POST`
+- **Description:** Make the bot join a specific channel.
+
+**Body example:**
+
+```json
+{
+    "guild_id": "1234567890123456789",
+    "channel_id": "1234567890123456789"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "guild_id": "1234567890123456789",
+    "channel_id": "1234567890123456789"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/channel/join',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>8. Leave Channel</strong></summary>
+
+- **Endpoint:** `/api/channel/leave`
+- **Method:** `POST`
+- **Description:** Make the bot leave.
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/channel/leave',
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>9. Update Settings</strong></summary>
+
+- **Endpoint:** `/api/settings`
+- **Method:** `POST`
+- **Description:** Changes the settings for `guild_id` and `channel_id`.
+
+**Body example:**
+
+```json
+{
+    "guild_id": "1234567890123456789",
+    "channel_id": "1234567890123456789"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "guild_id": "1234567890123456789",
+    "channel_id": "1234567890123456789"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/settings',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>10. Get Settings</strong></summary>
+
+- **Endpoint:** `/api/settings`
+- **Method:** `GET`
+- **Description:** Gets the current setting of: (`guild_id` and `channel_id`)
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.get(
+    'http://127.0.0.1:5000/api/settings',
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+
 # Features that maybe get added in the future:
  - being able to disable the webui
  - !list command
