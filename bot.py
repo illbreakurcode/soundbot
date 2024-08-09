@@ -66,6 +66,7 @@ if(not os.path.exists(CONFIG_FILE)):
     exit(0)
 
 def add_sounds_from_directory():
+    global config
     sounds_directory = 'sounds'
     config = load_config()
     
