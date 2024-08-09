@@ -337,11 +337,295 @@ print(response.json())
 ```
 </details>
 
+<details>
+<summary><strong>11. Search for MyInstants Sounds</strong></summary>
+
+- **Endpoint:** `/api/myinstants/search`
+- **Method:** `GET`
+- **Description:** Search for files on MyInstants.
+
+**Query-Parameter:**
+
+- `name`: The Search Query.
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+response = requests.get(
+    'http://127.0.0.1:5000/api/myinstants/search',
+    params={'name': 'funny'},
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>12. Play a MyInstants Sound</strong></summary>
+
+- **Endpoint:** `/api/myinstants/play`
+- **Method:** `POST`
+- **Description:** Plays a MyInstants sound in the discord voice channel.
+
+**Body example:**
+
+```json
+{
+    "guild_id": "123456789012345678",
+    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "guild_id": "123456789012345678",
+    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/myinstants/play',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+<details>
+<summary><strong>13. Adds a MyInstants sound to the sound list</strong></summary>
+
+- **Endpoint:** `/api/myinstants/download`
+- **Method:** `POST`
+- **Description:** Downloads a MyInstants sound and saves it localy.
+
+**Body example:**
+
+```json
+{
+    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
+}
+```
+
+**Request example:**
+
+```python
+import requests
+from requests.auth import HTTPBasicAuth
+
+data = {
+    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
+}
+
+response = requests.post(
+    'http://127.0.0.1:5000/api/myinstants/download',
+    json=data,
+    auth=HTTPBasicAuth('admin', 'password123')
+)
+print(response.json())
+```
+</details>
+
+# Current Features:
+<details>
+  <summary>Discord Bot Commands</summary>
+
+### !play <sound_name>
+
+Plays the specified sound in the current voice channel.
+
+### !stop
+
+Stops the currently playing sound.
+
+### !join <channel_id> (Optional)
+
+Joins the specified voice channel or the channel where the user is currently in.
+
+### !leave
+
+Leaves the voice channel the bot is connected to.
+
+### !list
+
+Lists all the available sounds in the bot.
+</details>
+
+<details>
+  <summary>Watchdog</summary>
+Monitors the sounds directory for changes (additions or deletions of sound files). Automatically registers or unregisters sound files with the Flask API. 
+
+Event Handling: 
+
+`on_created: Adds the new sound file to the registry. `
+
+`on_deleted: Removes the sound file from the registry.`
+
+</details>
+<details>
+  <summary>Configuration</summary>
+Stores all configuration settings such as sound files, Discord guild ID, channel ID, and Flask server details.
+
+Sound Files: A dictionary mapping sound names to their file paths.
+Guild ID: The ID of the Discord server.
+Channel ID: The ID of the Discord channel.
+Discord Token: The token for your Discord bot.
+Flask Settings: Includes the host, port, username, and password for the Flask server.
+
+`{
+  "sound_files": {},
+  "guild_id": "your_guild_id",
+  "channel_id": "your_channel_id",
+  "discord_token": "YOUR_DISCORD_TOKEN",
+  "flask": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "username": "admin",
+    "password": "hashed_password"
+  }
+}`
+
+</details>
+<details>
+  <summary>Flask API Endpoints</summary>
+
+### GET /api/sounds
+
+Returns a list of all registered sound files.
+### POST /api/sounds/add
+
+Adds a new sound file to the registry.
+
+    Request Body:
+
+    json
+
+    {
+      "name": "sound_name",
+      "path": "path/to/sound/file"
+    }
+
+### POST /api/sounds/remove
+
+Removes a sound file from the registry.
+
+    Request Body:
+
+    json
+
+    {
+      "name": "sound_name"
+    }
+
+### POST /api/sounds/rename
+
+Renames an existing sound file in the registry.
+
+    Request Body:
+
+    json
+
+    {
+      "oldName": "old_sound_name",
+      "newName": "new_sound_name"
+    }
+
+### POST /api/sounds/play
+
+Plays a registered sound in the specified Discord channel.
+
+    Request Body:
+
+    json
+
+    {
+      "name": "sound_name"
+    }
+
+### POST /api/channel/join
+
+Joins a specified voice channel in a Discord server.
+
+    Request Body:
+
+    json
+
+    {
+      "guild_id": "your_guild_id",
+      "channel_id": "your_channel_id"
+    }
+
+### POST /api/channel/leave
+
+Leaves the voice channel in the specified Discord server.
+
+    Request Body:
+
+    json
+
+    {
+      "guild_id": "your_guild_id"
+    }
+
+### POST /api/sounds/stop
+
+Stops the currently playing sound in the specified Discord server.
+
+    Request Body:
+
+    json
+
+    {
+      "guild_id": "your_guild_id"
+    }
+
+### GET /api/myinstants/search
+
+Searches for a sound on MyInstants based on the provided query.
+
+    Query Parameters:
+
+    php
+
+    ?name=<search_term>
+
+### POST /api/myinstants/play
+
+Plays a sound directly from MyInstants.
+
+    Request Body:
+
+    json
+
+    {
+      "guild_id": "your_guild_id",
+      "url": "myinstants_sound_url"
+    }
+
+### POST /api/myinstants/download
+
+Downloads a sound from MyInstants and adds it to the registry.
+
+    Request Body:
+
+    json
+
+    {
+      "url": "myinstants_sound_url"
+    }
+
+</details>
+
 
 # Features that maybe get added in the future:
  - being able to disable the webui
- - MyInstants API
- - better command support
  - being able to disable the HTTP-Basic-Auth
  - automaticly generating the .htaccess using python
  - multi user support
