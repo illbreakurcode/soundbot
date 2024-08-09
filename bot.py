@@ -249,6 +249,15 @@ async def leave(ctx):
     guild_id = ctx.guild.id
     await leave_channel_coroutine(guild_id)
 
+@bot.command(name='list')
+async def list(ctx):
+    sound_names = config["sound_files"].keys()
+    embed = discord.Embed(title="Available Sounds", color=discord.Color.blue())
+    
+    embed.description = "\n".join(sound_names)
+    
+    await ctx.send(embed=embed)
+
 def run_flask_app():
     app.run(host=config["flask"]["host"], port=config["flask"]["port"])
 
