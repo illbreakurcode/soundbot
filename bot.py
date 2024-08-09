@@ -9,7 +9,8 @@ import threading
 from werkzeug.security import generate_password_hash, check_password_hash
 from getpass import getpass
 
-os.makedirs("sounds", existok=True)
+if not os.path.exists("./sounds"):
+    os.makedirs("sounds")
 
 # Konfigurationsdatei
 CONFIG_FILE = 'config.json'
