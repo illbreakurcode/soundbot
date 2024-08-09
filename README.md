@@ -340,7 +340,6 @@ print(response.json())
 
 # Features that maybe get added in the future:
  - being able to disable the webui
- - !list command
  - MyInstants API
  - better command support
  - being able to disable the HTTP-Basic-Auth
