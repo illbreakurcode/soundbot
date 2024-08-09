@@ -1,0 +1,6 @@
+discord.py
+discord.py[voice]
+flask
+asyncio
+werkzeug
+PyNaCL
