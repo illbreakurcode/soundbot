@@ -1,5 +1,6 @@
 import os
 os.system("pip3 install -r requirements.txt")
+import subprocess
 import json
 import discord
 from discord.ext import commands
@@ -12,18 +13,17 @@ from getpass import getpass
 if not os.path.exists("./sounds"):
     os.makedirs("sounds")
 
-# Konfigurationsdatei
 CONFIG_FILE = 'config.json'
 DEFAULT_CONFIG = {
     "sound_files": {},
     "guild_id": "",
     "channel_id": "",
-    "discord_token": "YOUR_DISCORD_TOKEN",  # Füge hier den Standard-Token hinzu
+    "discord_token": "YOUR_DISCORD_TOKEN",
     "flask": {
         "host": "127.0.0.1",
         "port": 5000,
         "username": "admin",
-        "password": generate_password_hash("password123")  # Standard-Passwort-Hash
+        "password": generate_password_hash("password123")
     }
 }
 
@@ -55,7 +55,8 @@ if(not os.path.exists(CONFIG_FILE)):
         "host": f"{ipv4}",
         "port": port,
         "username": f"{user}",
-        "password": generate_password_hash(pw)
+        "password": generate_password_hash(pw),
+        "password": pw
         }
     }
     save_config(DEFAULT_CONFIG)
@@ -65,11 +66,9 @@ if(not os.path.exists(CONFIG_FILE)):
     exit(0)
 
 def add_sounds_from_directory():
-    """Füge alle .mp3-Dateien im Sounds-Verzeichnis zur Konfiguration hinzu."""
     sounds_directory = 'sounds'
     config = load_config()
     
-    # Durchlaufe alle Dateien im Sounds-Verzeichnis
     for filename in os.listdir(sounds_directory):
         if filename.endswith('.mp3'):
             sound_name = os.path.splitext(filename)[0]
@@ -162,7 +161,7 @@ async def join_channel_coroutine(guild_id, channel_id):
     if guild:
         channel = guild.get_channel(int(channel_id))
         if channel:
-            if not guild.voice_client:  # Check if the bot is already connected
+            if not guild.voice_client:
                 try:
                     await channel.connect()
                     print(f"Successfully joined channel {channel_id}")
@@ -224,7 +223,7 @@ async def stop_sound_coroutine(guild_id):
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
-    add_sounds_from_directory()  # Füge die Sounds zur Konfiguration hinzu, wenn der Bot bereit ist
+    add_sounds_from_directory()
 
 @bot.command(name='play')
 async def play(ctx, sound_name: str):
@@ -250,10 +249,14 @@ async def leave(ctx):
     guild_id = ctx.guild.id
     await leave_channel_coroutine(guild_id)
 
-# Start the Flask app in a separate thread
 def run_flask_app():
     app.run(host=config["flask"]["host"], port=config["flask"]["port"])
 
 if __name__ == '__main__':
-    threading.Thread(target=run_flask_app).start()
-    bot.run(config["discord_token"])
+    watchdog_process = subprocess.Popen(['python3', 'watchdog_script.py'])
+    
+    try:
+        threading.Thread(target=run_flask_app).start()
+        bot.run(config["discord_token"])
+    finally:
+        watchdog_process.terminate()
