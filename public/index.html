@@ -27,6 +27,14 @@
         <button onclick="stopSound()">Stop Sound</button>
     </div>
 
+    <!-- Sound Search and Play -->
+    <div>
+        <h2>Search and Play Sounds</h2>
+        <input type="text" id="searchTerm" placeholder="Search for a sound">
+        <button onclick="searchSounds()">Search</button>
+        <div id="searchResults"></div>
+    </div>
+
     <!-- Soundboard -->
     <div id="soundboard"></div>
 
@@ -141,6 +149,64 @@
                     body: JSON.stringify({ name })
                 });
                 fetchSounds(); // Refresh the soundboard
+            }
+        }
+
+        // Search sounds from MyInstants and display results
+        async function searchSounds() {
+            const searchTerm = document.getElementById('searchTerm').value;
+            const res = await fetch(`/api/myinstants/search?name=${encodeURIComponent(searchTerm)}`);
+            const results = await res.json();
+
+            const searchResultsDiv = document.getElementById('searchResults');
+            searchResultsDiv.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                const playButtonId = `playButton${index}`;
+                const addButtonId = `addButton${index}`;
+
+                resultDiv.innerHTML = `
+                    <strong>${result.name}</strong>
+                    <button id="${playButtonId}" onclick="playInstantSound('${result.url}', '${addButtonId}')">Play</button>
+                    <button id="${addButtonId}" style="display: none;" onclick="addInstantSound('${result.url}')">Add</button>
+                `;
+                searchResultsDiv.appendChild(resultDiv);
+            });
+        }
+
+        // Play sound directly from MyInstants results via bot
+        async function playInstantSound(url, addButtonId) {
+            const guildId = document.getElementById('guildId').value;
+
+            if (!guildId) {
+                alert('Please enter a Guild ID.');
+                return;
+            }
+
+            await fetch('/api/myinstants/play', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guild_id: guildId, url: `https://www.myinstants.com${url}` })
+            });
+
+            // Zeige den "Add"-Button nach dem Abspielen
+            document.getElementById(addButtonId).style.display = 'inline';
+        }
+
+        // Add sound to the server by downloading it
+        async function addInstantSound(url) {
+            const res = await fetch('/api/myinstants/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: `https://www.myinstants.com${url}` })
+            });
+            
+            if (res.ok) {
+                alert('Sound added successfully!');
+                fetchSounds(); // Update the soundboard after adding
+            } else {
+                alert('Failed to add sound.');
             }
         }
 
