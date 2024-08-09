@@ -4,3 +4,4 @@ flask
 asyncio
 werkzeug
 PyNaCL
+watchdog
