@@ -237,13 +237,21 @@ async def stop(ctx):
     await stop_sound_coroutine(guild_id)
 
 @bot.command(name='join')
-async def join(ctx, channel_id: str):
-    channel_id = channel_id.strip('<>#')
-    if channel_id == '1262035383718383630':
-        guild_id = ctx.guild.id
-        await join_channel_coroutine(guild_id, channel_id)
+async def join(ctx, channel_id: str = None):
+    if channel_id:
+        channel_id = channel_id.strip('<>#')
+        if channel_id == '1262035383718383630':
+            guild_id = ctx.guild.id
+            await join_channel_coroutine(guild_id, channel_id)
+        else:
+            await ctx.send("Invalid channel ID format or channel ID does not match the known ID.")
     else:
-        await ctx.send("Invalid channel ID format or channel ID does not match the known ID.")
+        # Wenn kein channel_id angegeben ist, benutze den Sprachkanal des Absenders
+        if ctx.author.voice and ctx.author.voice.channel:
+            channel = ctx.author.voice.channel
+            await channel.connect()
+        else:
+            await ctx.send("You are not connected to a voice channel and no channel ID was provided.")
 
 @bot.command(name='leave')
 async def leave(ctx):
