@@ -15,8 +15,8 @@ os.makedirs("sounds", existok=True)
 CONFIG_FILE = 'config.json'
 DEFAULT_CONFIG = {
     "sound_files": {},
-    "guild_id": "1262035383718383626",
-    "channel_id": "1262035383718383630",
+    "guild_id": "",
+    "channel_id": "",
     "discord_token": "YOUR_DISCORD_TOKEN",  # Füge hier den Standard-Token hinzu
     "flask": {
         "host": "127.0.0.1",
