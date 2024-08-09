@@ -4,11 +4,14 @@ import subprocess
 import json
 import discord
 from discord.ext import commands
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import asyncio
 import threading
+import myinstants_api
 from werkzeug.security import generate_password_hash, check_password_hash
 from getpass import getpass
+import requests
+from urllib.parse import unquote
 
 if not os.path.exists("./sounds"):
     os.makedirs("sounds")
@@ -67,7 +70,7 @@ if(not os.path.exists(CONFIG_FILE)):
 
 def add_sounds_from_directory():
     global config
-    sounds_directory = 'sounds'
+    sounds_directory = config["sounds_dir"]
     config = load_config()
     
     for filename in os.listdir(sounds_directory):
@@ -77,7 +80,7 @@ def add_sounds_from_directory():
             
             if filename not in str(config["sound_files"]):
                 config["sound_files"][sound_name] = sound_path
-
+    
     save_config(config)
 
 config = load_config()
@@ -220,6 +223,55 @@ async def stop_sound_coroutine(guild_id):
     if guild and guild.voice_client:
         guild.voice_client.stop()
         print(f"Stopped sound in channel for guild {guild_id}")
+
+@app.route('/api/myinstants/search', methods=['GET'])
+def search_myinstants():
+    search_term = request.args.get('name', '')  # Hole den Suchbegriff aus den Query-Parametern
+    return myinstants_api.search(search_term)
+
+@app.route('/api/myinstants/play', methods=['POST'])
+def play_myinstants_sound():
+    data = request.json
+    guild_id = data.get('guild_id')
+    url = data.get('url')
+
+    if not guild_id or not url:
+        return jsonify({'error': 'Missing guild_id or url'}), 400
+
+    voice_client = bot.get_guild(int(guild_id)).voice_client
+
+    if voice_client and voice_client.is_connected():
+        # Play the sound directly from the URL
+        voice_client.play(discord.FFmpegPCMAudio(url))
+        return jsonify({'status': 'playing'}), 200
+    else:
+        return jsonify({'error': 'Bot is not connected to a voice channel'}), 400
+
+@app.route('/api/myinstants/download', methods=['POST'])
+def download_myinstants_sound():
+    data = request.json
+    url = data.get('url')
+    
+    if not url:
+        return jsonify({'error': 'Missing URL'}), 400
+    
+    try:
+        # Extrahiere den Dateinamen aus der URL
+        filename = unquote(url.split('/')[-1]) + '.mp3'
+        filename = filename.replace(".mp3.mp3", ".mp3")
+        filepath = os.path.join(config["sounds_dir"], filename)
+        
+        # Sound von MyInstants herunterladen
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(filepath, 'wb') as f:
+                for chunk in response.iter_content(1024):
+                    f.write(chunk)
+            return jsonify({'status': 'downloaded', 'name': filename}), 200
+        else:
+            return jsonify({'error': 'Failed to download sound'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bot.event
 async def on_ready():

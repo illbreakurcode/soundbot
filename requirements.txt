@@ -5,3 +5,5 @@ asyncio
 werkzeug
 PyNaCL
 watchdog
+requests
+beautifulsoup4
