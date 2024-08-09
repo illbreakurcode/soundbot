@@ -74,9 +74,9 @@ def add_sounds_from_directory():
             sound_name = os.path.splitext(filename)[0]
             sound_path = os.path.join(sounds_directory, filename)
             
-            if sound_name not in config["sound_files"]:
+            if filename not in str(config["sound_files"]):
                 config["sound_files"][sound_name] = sound_path
-    
+
     save_config(config)
 
 config = load_config()
