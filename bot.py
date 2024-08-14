@@ -19,6 +19,7 @@ if not os.path.exists("./sounds"):
 CONFIG_FILE = 'config.json'
 DEFAULT_CONFIG = {
     "sound_files": {},
+    "sounds_dir": "sounds",
     "guild_id": "",
     "channel_id": "",
     "discord_token": "YOUR_DISCORD_TOKEN",
@@ -50,6 +51,7 @@ if(not os.path.exists(CONFIG_FILE)):
     user = input('Enter Username (Default: admin): ') or 'admin'
     pw = getpass('Enter Password: ')
     DEFAULT_CONFIG = {
+    "sounds_dir": "sounds",
     "sound_files": {},
     "guild_id": f"{guildid}",
     "channel_id": f"{channelid}",
