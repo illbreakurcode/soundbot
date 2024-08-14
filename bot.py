@@ -4,6 +4,7 @@ import subprocess
 import json
 import discord
 from discord.ext import commands
+from discord import app_commands
 from flask import Flask, request, jsonify, render_template
 import asyncio
 import threading
@@ -17,62 +18,50 @@ if not os.path.exists("./sounds"):
     os.makedirs("sounds")
 
 CONFIG_FILE = 'config.json'
-DEFAULT_CONFIG = {
-    "sound_files": {},
-    "sounds_dir": "sounds",
-    "guild_id": "",
-    "channel_id": "",
-    "discord_token": "YOUR_DISCORD_TOKEN",
-    "flask": {
-        "host": "127.0.0.1",
-        "port": 5000,
-        "username": "admin",
-        "password": generate_password_hash("password123")
-    }
-}
-
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as f:
             return json.load(f)
-    return DEFAULT_CONFIG
+    return None
 
 def save_config(config):
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=4)
 
-if(not os.path.exists(CONFIG_FILE)):
+if not os.path.exists(CONFIG_FILE):
     guildid = int(input('Enter Guild ID: '))
     channelid = int(input('Enter Channel ID: '))
     token = input('Enter Bot Token: ')
+    sounds_dir = input('How should the folder with the sounds in it be called? ')
     ipv4 = input('Bind IPv4? (Default: 0.0.0.0): ')  or '0.0.0.0'
     port = int(input('Enter Port (Default: 5000): ') or 5000)
     user = input('Enter Username (Default: admin): ') or 'admin'
     pw = getpass('Enter Password: ')
-    DEFAULT_CONFIG = {
-    "sounds_dir": "sounds",
-    "sound_files": {},
-    "guild_id": f"{guildid}",
-    "channel_id": f"{channelid}",
-    "discord_token": f"{token}", 
-    "flask": {
-        "host": f"{ipv4}",
-        "port": port,
-        "username": f"{user}",
-        "password": generate_password_hash(pw),
-        "password": pw
+    CUSTOM_CONFIG = {
+        "sound_files": {},
+        "sounds_dir": f"{sounds_dir}",
+        "guild_id": f"{guildid}",
+        "channel_id": f"{channelid}",
+        "discord_token": f"{token}",
+        "flask": {
+            "host": f"{ipv4}",
+            "port": port,
+            "username": f"{user}",
+            "password": generate_password_hash(pw),
+            "password_clear": pw
         }
     }
-    save_config(DEFAULT_CONFIG)
+    pw = None
+    save_config(CUSTOM_CONFIG)
     print()
-    print("Pleas run following command and configure your password (note: you have to be in the bots root directory): ")
+    print("Please run the following command and configure your password (note: you have to be in the bot's root directory): ")
     print(f"$ cd public && htpasswd -c .htpasswd {user}")
     exit(0)
 
 def add_sounds_from_directory():
     global config
-    sounds_directory = config["sounds_dir"]
+    sounds_directory = str(config["sounds_dir"])
     config = load_config()
     
     for filename in os.listdir(sounds_directory):
@@ -82,7 +71,14 @@ def add_sounds_from_directory():
             
             if filename not in str(config["sound_files"]):
                 config["sound_files"][sound_name] = sound_path
-    
+
+    sounds = config["sound_files"].items()
+
+    keys_to_delete = [sound_name for sound_name, sound_path in sounds if not os.path.exists(sound_path)]
+
+    for key in keys_to_delete:
+        del config["sound_files"][key]
+
     save_config(config)
 
 config = load_config()
@@ -269,6 +265,7 @@ def download_myinstants_sound():
             with open(filepath, 'wb') as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
+                print("downloaded")
             return jsonify({'status': 'downloaded', 'name': filename}), 200
         else:
             return jsonify({'error': 'Failed to download sound'}), 500
@@ -280,46 +277,58 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
     add_sounds_from_directory()
 
-@bot.command(name='play')
-async def play(ctx, sound_name: str):
-    guild_id = ctx.guild.id
+    # Register all commands globally on all servers
+    try:
+        await bot.tree.sync()
+        print("Slash commands synced globally.")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
+
+# Define slash commands
+@bot.tree.command(name='play')
+async def play(interaction: discord.Interaction, sound_name: str):
+    guild_id = interaction.guild.id
     await play_sound_coroutine(guild_id, sound_name)
+    await interaction.response.send_message(f"Playing sound: {sound_name}")
 
-@bot.command(name='stop')
-async def stop(ctx):
-    guild_id = ctx.guild.id
+@bot.tree.command(name='stop')
+async def stop(interaction: discord.Interaction):
+    guild_id = interaction.guild.id
     await stop_sound_coroutine(guild_id)
+    await interaction.response.send_message("Sound stopped.")
 
-@bot.command(name='join')
-async def join(ctx, channel_id: str = None):
+@bot.tree.command(name='join')
+async def join(interaction: discord.Interaction, channel_id: str = None):
     if channel_id:
         channel_id = channel_id.strip('<>#')
         if channel_id == '1262035383718383630':
-            guild_id = ctx.guild.id
+            guild_id = interaction.guild.id
             await join_channel_coroutine(guild_id, channel_id)
+            await interaction.response.send_message(f"Joined channel {channel_id}.")
         else:
-            await ctx.send("Invalid channel ID format or channel ID does not match the known ID.")
+            await interaction.response.send_message("Invalid channel ID format or channel ID does not match the known ID.", ephemeral=True)
     else:
-        # Wenn kein channel_id angegeben ist, benutze den Sprachkanal des Absenders
-        if ctx.author.voice and ctx.author.voice.channel:
-            channel = ctx.author.voice.channel
+        if interaction.user.voice and interaction.user.voice.channel:
+            channel = interaction.user.voice.channel
             await channel.connect()
+            await interaction.response.send_message(f"Joined channel {channel.id}.")
         else:
-            await ctx.send("You are not connected to a voice channel and no channel ID was provided.")
+            await interaction.response.send_message("You are not connected to a voice channel and no channel ID was provided.", ephemeral=True)
 
-@bot.command(name='leave')
-async def leave(ctx):
-    guild_id = ctx.guild.id
+@bot.tree.command(name='leave')
+async def leave(interaction: discord.Interaction):
+    guild_id = interaction.guild.id
     await leave_channel_coroutine(guild_id)
+    await interaction.response.send_message("Left the voice channel.")
 
-@bot.command(name='list')
-async def list(ctx):
+@bot.tree.command(name='list')
+async def list(interaction: discord.Interaction):
     sound_names = config["sound_files"].keys()
     embed = discord.Embed(title="Available Sounds", color=discord.Color.blue())
     
     embed.description = "\n".join(sound_names)
     
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
 def run_flask_app():
     app.run(host=config["flask"]["host"], port=config["flask"]["port"])
