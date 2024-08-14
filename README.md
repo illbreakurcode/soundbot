@@ -337,7 +337,6 @@ print(response.json())
 ```
 </details>
 
-<details>
 
 # Current Features:
 <details>
