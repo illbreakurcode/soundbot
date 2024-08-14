@@ -28,7 +28,7 @@ Configure the config by following the commands in the console.
   <summary>I don't have the htpasswd command</summary>
     Install the apache2-utils packet. e.g.:
   
-    `$ sudo apt install apache2-utils`
+    $ sudo apt install apache2-utils
 </details>
 
 Now add sound files to the sounds directory and start the bot with `$ python3 bot.py`
@@ -338,100 +338,6 @@ print(response.json())
 </details>
 
 <details>
-<summary><strong>11. Search for MyInstants Sounds</strong></summary>
-
-- **Endpoint:** `/api/myinstants/search`
-- **Method:** `GET`
-- **Description:** Search for files on MyInstants.
-
-**Query-Parameter:**
-
-- `name`: The Search Query.
-
-**Request example:**
-
-```python
-import requests
-from requests.auth import HTTPBasicAuth
-
-response = requests.get(
-    'http://127.0.0.1:5000/api/myinstants/search',
-    params={'name': 'funny'},
-    auth=HTTPBasicAuth('admin', 'password123')
-)
-print(response.json())
-```
-</details>
-
-<details>
-<summary><strong>12. Play a MyInstants Sound</strong></summary>
-
-- **Endpoint:** `/api/myinstants/play`
-- **Method:** `POST`
-- **Description:** Plays a MyInstants sound in the discord voice channel.
-
-**Body example:**
-
-```json
-{
-    "guild_id": "123456789012345678",
-    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
-}
-```
-
-**Request example:**
-
-```python
-import requests
-from requests.auth import HTTPBasicAuth
-
-data = {
-    "guild_id": "123456789012345678",
-    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
-}
-
-response = requests.post(
-    'http://127.0.0.1:5000/api/myinstants/play',
-    json=data,
-    auth=HTTPBasicAuth('admin', 'password123')
-)
-print(response.json())
-```
-</details>
-
-<details>
-<summary><strong>13. Adds a MyInstants sound to the sound list</strong></summary>
-
-- **Endpoint:** `/api/myinstants/download`
-- **Method:** `POST`
-- **Description:** Downloads a MyInstants sound and saves it localy.
-
-**Body example:**
-
-```json
-{
-    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
-}
-```
-
-**Request example:**
-
-```python
-import requests
-from requests.auth import HTTPBasicAuth
-
-data = {
-    "url": "https://www.myinstants.com/media/sounds/funny-sound.mp3"
-}
-
-response = requests.post(
-    'http://127.0.0.1:5000/api/myinstants/download',
-    json=data,
-    auth=HTTPBasicAuth('admin', 'password123')
-)
-print(response.json())
-```
-</details>
 
 # Current Features:
 <details>
@@ -586,41 +492,6 @@ Stops the currently playing sound in the specified Discord server.
       "guild_id": "your_guild_id"
     }
 
-### GET /api/myinstants/search
-
-Searches for a sound on MyInstants based on the provided query.
-
-    Query Parameters:
-
-    php
-
-    ?name=<search_term>
-
-### POST /api/myinstants/play
-
-Plays a sound directly from MyInstants.
-
-    Request Body:
-
-    json
-
-    {
-      "guild_id": "your_guild_id",
-      "url": "myinstants_sound_url"
-    }
-
-### POST /api/myinstants/download
-
-Downloads a sound from MyInstants and adds it to the registry.
-
-    Request Body:
-
-    json
-
-    {
-      "url": "myinstants_sound_url"
-    }
-
 </details>
 
 
@@ -629,4 +500,3 @@ Downloads a sound from MyInstants and adds it to the registry.
  - being able to disable the HTTP-Basic-Auth
  - automaticly generating the .htaccess using python
  - multi user support
- - upload sound functionality (using command with download link & a `<input type=file>` on the webside)
