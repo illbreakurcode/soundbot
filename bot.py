@@ -8,16 +8,14 @@ from discord import app_commands
 from flask import Flask, request, jsonify, render_template
 import asyncio
 import threading
-import myinstants_api
 from werkzeug.security import generate_password_hash, check_password_hash
 from getpass import getpass
 import requests
-from urllib.parse import unquote
 
 if not os.path.exists("./sounds"):
     os.makedirs("sounds")
 
-CONFIG_FILE = 'config.json'
+CONFIG_FILE = './config/config.json'
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -222,55 +220,28 @@ async def stop_sound_coroutine(guild_id):
         guild.voice_client.stop()
         print(f"Stopped sound in channel for guild {guild_id}")
 
-@app.route('/api/myinstants/search', methods=['GET'])
-def search_myinstants():
-    search_term = request.args.get('name', '')  # Hole den Suchbegriff aus den Query-Parametern
-    return myinstants_api.search(search_term)
+@app.route('/api/sounds/upload', methods=['POST'])
+def upload_sound():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
 
-@app.route('/api/myinstants/play', methods=['POST'])
-def play_myinstants_sound():
-    data = request.json
-    guild_id = data.get('guild_id')
-    url = data.get('url')
-
-    if not guild_id or not url:
-        return jsonify({'error': 'Missing guild_id or url'}), 400
-
-    voice_client = bot.get_guild(int(guild_id)).voice_client
-
-    if voice_client and voice_client.is_connected():
-        # Play the sound directly from the URL
-        voice_client.play(discord.FFmpegPCMAudio(url))
-        return jsonify({'status': 'playing'}), 200
-    else:
-        return jsonify({'error': 'Bot is not connected to a voice channel'}), 400
-
-@app.route('/api/myinstants/download', methods=['POST'])
-def download_myinstants_sound():
-    data = request.json
-    url = data.get('url')
+    file = request.files['file']
     
-    if not url:
-        return jsonify({'error': 'Missing URL'}), 400
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
     
-    try:
-        # Extrahiere den Dateinamen aus der URL
-        filename = unquote(url.split('/')[-1]) + '.mp3'
-        filename = filename.replace(".mp3.mp3", ".mp3")
+    if file and file.filename.endswith('.mp3'):
+        filename = file.filename
         filepath = os.path.join(config["sounds_dir"], filename)
+        file.save(filepath)
         
-        # Sound von MyInstants herunterladen
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            with open(filepath, 'wb') as f:
-                for chunk in response.iter_content(1024):
-                    f.write(chunk)
-                print("downloaded")
-            return jsonify({'status': 'downloaded', 'name': filename}), 200
-        else:
-            return jsonify({'error': 'Failed to download sound'}), 500
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        sound_name = os.path.splitext(filename)[0]
+        config["sound_files"][sound_name] = filepath
+        save_config(config)
+        
+        return jsonify({'message': 'File uploaded successfully'}), 200
+    else:
+        return jsonify({'error': 'Invalid file type'}), 400
 
 @bot.event
 async def on_ready():
@@ -285,43 +256,44 @@ async def on_ready():
         print(f"Failed to sync commands: {e}")
 
 # Define slash commands
-@bot.tree.command(name='play')
+@bot.tree.command(name='play', description="Plays a provided sound.")
 async def play(interaction: discord.Interaction, sound_name: str):
     guild_id = interaction.guild.id
     await play_sound_coroutine(guild_id, sound_name)
     await interaction.response.send_message(f"Playing sound: {sound_name}")
 
-@bot.tree.command(name='stop')
+@bot.tree.command(name='stop', description="Stops the current sound.")
 async def stop(interaction: discord.Interaction):
     guild_id = interaction.guild.id
     await stop_sound_coroutine(guild_id)
     await interaction.response.send_message("Sound stopped.")
 
-@bot.tree.command(name='join')
+@bot.tree.command(name='join', description="Joins the provided channelid/Your channel")
 async def join(interaction: discord.Interaction, channel_id: str = None):
     if channel_id:
         channel_id = channel_id.strip('<>#')
-        if channel_id == '1262035383718383630':
+        try:
             guild_id = interaction.guild.id
             await join_channel_coroutine(guild_id, channel_id)
-            await interaction.response.send_message(f"Joined channel {channel_id}.")
-        else:
-            await interaction.response.send_message("Invalid channel ID format or channel ID does not match the known ID.", ephemeral=True)
+            await interaction.response.send_message(f"Joined channel <#{channel_id}>.")
+        except Exception as e: 
+            print(f"An error occurred: {e}") 
+    
     else:
         if interaction.user.voice and interaction.user.voice.channel:
             channel = interaction.user.voice.channel
             await channel.connect()
-            await interaction.response.send_message(f"Joined channel {channel.id}.")
+            await interaction.response.send_message(f"Joined channel <#{channel.id}>.")
         else:
             await interaction.response.send_message("You are not connected to a voice channel and no channel ID was provided.", ephemeral=True)
 
-@bot.tree.command(name='leave')
+@bot.tree.command(name='leave', description="Disconnects the bot from the current voice channel.")
 async def leave(interaction: discord.Interaction):
     guild_id = interaction.guild.id
     await leave_channel_coroutine(guild_id)
     await interaction.response.send_message("Left the voice channel.")
 
-@bot.tree.command(name='list')
+@bot.tree.command(name='list', description="Lists all sounds.")
 async def list(interaction: discord.Interaction):
     sound_names = config["sound_files"].keys()
     embed = discord.Embed(title="Available Sounds", color=discord.Color.blue())

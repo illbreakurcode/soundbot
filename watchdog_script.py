@@ -7,11 +7,11 @@ import json
 
 # Lade die Konfigurationsdaten aus der config.json
 def load_config():
-    with open('config.json', 'r') as f:
+    with open('./config/config.json', 'r') as f:
         return json.load(f)
 
 def save_config(config):
-    with open('config.json', 'w') as f:
+    with open('./config/config.json', 'w') as f:
         json.dump(config, f, indent=4)
 
 config = load_config()
@@ -73,7 +73,7 @@ class SoundEventHandler(FileSystemEventHandler):
 
 # Hauptfunktion
 if __name__ == "__main__":
-    path = "./sounds"
+    path = config["sounds_dir"]
     event_handler = SoundEventHandler()
     observer = Observer()
     observer.schedule(event_handler, path, recursive=False)

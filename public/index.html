@@ -29,10 +29,14 @@
 
     <!-- Sound Search and Play -->
     <div>
-        <h2>Search and Play Sounds</h2>
-        <input type="text" id="searchTerm" placeholder="Search for a sound">
-        <button onclick="searchSounds()">Search</button>
-        <div id="searchResults"></div>
+        <h2>Upload Sound</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="file">Select Sound File:</label>
+            <input type="file" id="file" name="file" accept=".mp3" required>
+            <br>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="uploadStatus"></div>
     </div>
 
     <!-- Soundboard -->
@@ -209,6 +213,35 @@
                 alert('Failed to add sound.');
             }
         }
+
+        document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/sounds/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+            const uploadStatus = document.getElementById('uploadStatus');
+
+            if (res.ok) {
+                uploadStatus.textContent = 'File uploaded successfully!';
+            } else {
+                uploadStatus.textContent = `Upload failed: ${result.error}`;
+            }
+        });
 
         // Initialize the page with current settings and sounds
         fetchSettings();
